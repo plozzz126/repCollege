@@ -275,15 +275,215 @@
 
 
 --12 
-SELECT 
-m.title, 
-COUNT(CASE WHEN t.status = 'paid' THEN 1 END) AS paid_count
+-- SELECT 
+-- m.title, 
+-- COUNT(CASE WHEN t.status = 'paid' THEN 1 END) AS paid_count
+-- FROM movies m
+-- JOIN sessions s ON m.id = s.movie_id 
+-- JOIN tickets t ON s.id = t.session_id
+-- GROUP BY m.title
+-- ORDER BY paid_count DESC
+-- LIMIT 3
+
+
+--13
+-- SELECT 
+-- m.title,
+-- ROUND(AVG(r.rating),1) AS avg_rating,
+-- COUNT(r.id) AS reviews_count
+-- FROM movies m
+-- JOIN reviews r ON m.id = r.movie_id
+-- GROUP BY m.id, m.title
+-- HAVING AVG(r.rating) >= 8 AND COUNT(r.id) >= 2
+-- ORDER BY avg_rating DESC;
+
+--14
+-- SELECT 
+-- h.name AS hall_name,
+-- COUNT(t.id) AS paid_count
+-- FROM halls h
+-- JOIN sessions s ON h.id = s.hall_id
+-- JOIN tickets t ON s.id = t.session_id
+-- WHERE t.status = 'paid'
+-- GROUP BY h.id, h.name
+-- HAVING COUNT(t.id) >= 4
+-- ORDER BY paid_count DESC;
+
+--15
+-- SELECT 
+-- v.city,
+-- COUNT(t.id) AS paid_tickets_count,
+-- SUM(t.price_paid) AS revenue
+-- FROM viewers v
+-- JOIN tickets t ON v.id = t.viewer_id
+-- WHERE t.status = 'paid'
+-- GROUP BY v.city
+-- ORDER BY revenue DESC;
+
+--16
+-- SELECT 
+-- s.id AS session_id,
+-- SUM(t.price_paid) AS revenue,
+-- (SELECT AVG(session_revenue)
+--  FROM (SELECT SUM(t2.price_paid) AS session_revenue
+--        FROM sessions s2
+--        JOIN tickets t2 ON s2.id = t2.session_id
+--        WHERE t2.status = 'paid'
+--        GROUP BY s2.id) sub) AS avg_revenue_all_sessions
+-- FROM sessions s
+-- JOIN tickets t ON s.id = t.session_id
+-- WHERE t.status = 'paid'
+-- GROUP BY s.id
+-- HAVING SUM(t.price_paid) >
+-- (SELECT AVG(session_revenue)
+--  FROM (SELECT SUM(t2.price_paid) AS session_revenue
+--        FROM sessions s2
+--        JOIN tickets t2 ON s2.id = t2.session_id
+--        WHERE t2.status = 'paid'
+--        GROUP BY s2.id) sub)
+-- ORDER BY revenue DESC;
+
+--17
+-- SELECT 
+-- genre,
+-- COUNT(id) AS movies_count,
+-- ROUND(AVG(duration_min),1) AS avg_duration,
+-- MAX(age_rating) AS max_age_rating
+-- FROM movies
+-- GROUP BY genre
+-- ORDER BY genre;
+
+--18
+-- SELECT 
+-- m.title,
+-- m.duration_min,
+-- (SELECT AVG(duration_min) FROM movies) AS avg_duration_all
+-- FROM movies m
+-- WHERE m.duration_min > (SELECT AVG(duration_min) FROM movies)
+-- ORDER BY m.duration_min DESC;
+
+--19
+-- SELECT
+-- t.id AS ticket_id,
+-- t.price_paid,
+-- CASE
+-- WHEN t.price_paid < 1800 THEN 'cheap'
+-- WHEN t.price_paid BETWEEN 1800 AND 2499 THEN 'standard'
+-- ELSE 'premium'
+-- END AS price_bucket
+-- FROM tickets t;
+
+
+--20
+-- SELECT
+-- s.id AS session_id,
+-- h.capacity AS hall_capacity,
+-- COUNT(CASE WHEN t.status = 'paid' THEN 1 END) AS paid_count,
+-- CASE
+-- WHEN COUNT(CASE WHEN t.status = 'paid' THEN 1 END) = 0 THEN 'empty'
+-- WHEN COUNT(CASE WHEN t.status = 'paid' THEN 1 END) <= h.capacity * 0.5 THEN 'low'
+-- WHEN COUNT(CASE WHEN t.status = 'paid' THEN 1 END) <= h.capacity * 0.8 THEN 'mid'
+-- ELSE 'high'
+-- END AS fill_status
+-- FROM sessions s
+-- JOIN halls h ON s.hall_id = h.id
+-- LEFT JOIN tickets t ON s.id = t.session_id
+-- GROUP BY s.id, h.capacity
+-- ORDER BY s.id;
+
+--21
+-- SELECT
+-- v.id AS viewer_id,
+-- v.full_name,
+-- COUNT(CASE WHEN t.status = 'paid' THEN 1 END) AS paid_count,
+-- CASE
+-- WHEN COUNT(CASE WHEN t.status = 'paid' THEN 1 END) = 0 THEN 'new'
+-- WHEN COUNT(CASE WHEN t.status = 'paid' THEN 1 END) BETWEEN 1 AND 2 THEN 'regular'
+-- WHEN COUNT(CASE WHEN t.status = 'paid' THEN 1 END) BETWEEN 3 AND 5 THEN 'loyal'
+-- ELSE 'vip'
+-- END AS level
+-- FROM viewers v
+-- LEFT JOIN tickets t ON v.id = t.viewer_id
+-- GROUP BY v.id, v.full_name
+-- ORDER BY v.id;
+
+
+--22
+-- SELECT
+-- m.title,
+-- ROUND(AVG(r.rating),1) AS avg_rating,
+-- CASE
+-- WHEN AVG(r.rating) IS NULL THEN 'no_data'
+-- WHEN AVG(r.rating) < 7 THEN 'risk'
+-- WHEN AVG(r.rating) BETWEEN 7 AND 8.4 THEN 'ok'
+-- ELSE 'hit'
+-- END AS label
+-- FROM movies m
+-- LEFT JOIN reviews r ON m.id = r.movie_id
+-- GROUP BY m.id, m.title
+-- ORDER BY m.title;
+
+--23
+-- SELECT
+-- t.id AS ticket_id,
+-- v.full_name,
+-- m.title AS movie_title,
+-- (2026 - v.birth_year) AS viewer_age,
+-- m.age_rating,
+-- CASE
+-- WHEN (2026 - v.birth_year) < m.age_rating THEN 'underage'
+-- ELSE 'ok'
+-- END AS check_result
+-- FROM tickets t
+-- JOIN viewers v ON t.viewer_id = v.id
+-- JOIN sessions s ON t.session_id = s.id
+-- JOIN movies m ON s.movie_id = m.id
+-- ORDER BY t.id;
+
+
+--24
+SELECT
+m.title,
+ROUND(AVG(CASE WHEN t.status = 'paid' THEN t.price_paid END),1) AS avg_paid_price,
+CASE
+WHEN AVG(CASE WHEN t.status = 'paid' THEN t.price_paid END) < 2000 THEN 'budget'
+WHEN AVG(CASE WHEN t.status = 'paid' THEN t.price_paid END) BETWEEN 2000 AND 2999 THEN 'middle'
+ELSE 'expensive'
+END AS class
 FROM movies m
-JOIN sessions s ON m.id = s.movie_id 
+JOIN sessions s ON m.id = s.movie_id
 JOIN tickets t ON s.id = t.session_id
-GROUP BY m.title
-ORDER BY paid_count DESC
-LIMIT 3
+GROUP BY m.id, m.title
+ORDER BY m.title;
+
+
+--25
+SELECT
+v.id AS viewer_id,
+v.full_name
+FROM viewers v
+WHERE EXISTS (
+SELECT 1
+FROM tickets t
+JOIN sessions s ON t.session_id = s.id
+JOIN movies m ON s.movie_id = m.id
+WHERE t.viewer_id = v.id
+AND t.status = 'paid'
+AND m.genre = 'Sci-Fi'
+);
+
+
+--26
+SELECT
+m.id AS movie_id,
+m.title
+FROM movies m
+WHERE NOT EXISTS (
+SELECT 1
+FROM reviews r
+WHERE r.movie_id = m.id
+);
+
 
 
 
