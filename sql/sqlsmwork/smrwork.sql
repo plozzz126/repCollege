@@ -442,52 +442,109 @@
 
 
 --24
-SELECT
-m.title,
-ROUND(AVG(CASE WHEN t.status = 'paid' THEN t.price_paid END),1) AS avg_paid_price,
-CASE
-WHEN AVG(CASE WHEN t.status = 'paid' THEN t.price_paid END) < 2000 THEN 'budget'
-WHEN AVG(CASE WHEN t.status = 'paid' THEN t.price_paid END) BETWEEN 2000 AND 2999 THEN 'middle'
-ELSE 'expensive'
-END AS class
-FROM movies m
-JOIN sessions s ON m.id = s.movie_id
-JOIN tickets t ON s.id = t.session_id
-GROUP BY m.id, m.title
-ORDER BY m.title;
+-- SELECT
+-- m.title,
+-- ROUND(AVG(CASE WHEN t.status = 'paid' THEN t.price_paid END),1) AS avg_paid_price,
+-- CASE
+-- WHEN AVG(CASE WHEN t.status = 'paid' THEN t.price_paid END) < 2000 THEN 'budget'
+-- WHEN AVG(CASE WHEN t.status = 'paid' THEN t.price_paid END) BETWEEN 2000 AND 2999 THEN 'middle'
+-- ELSE 'expensive'
+-- END AS class
+-- FROM movies m
+-- JOIN sessions s ON m.id = s.movie_id
+-- JOIN tickets t ON s.id = t.session_id
+-- GROUP BY m.id, m.title
+-- ORDER BY m.title;
 
 
 --25
-SELECT
-v.id AS viewer_id,
-v.full_name
-FROM viewers v
-WHERE EXISTS (
-SELECT 1
-FROM tickets t
-JOIN sessions s ON t.session_id = s.id
-JOIN movies m ON s.movie_id = m.id
-WHERE t.viewer_id = v.id
-AND t.status = 'paid'
-AND m.genre = 'Sci-Fi'
-);
+-- SELECT
+-- v.id AS viewer_id,
+-- v.full_name
+-- FROM viewers v
+-- WHERE EXISTS (
+-- SELECT 1
+-- FROM tickets t
+-- JOIN sessions s ON t.session_id = s.id
+-- JOIN movies m ON s.movie_id = m.id
+-- WHERE t.viewer_id = v.id
+-- AND t.status = 'paid'
+-- AND m.genre = 'Sci-Fi'
+-- );
 
 
 --26
-SELECT
-m.id AS movie_id,
-m.title
-FROM movies m
-WHERE NOT EXISTS (
-SELECT 1
-FROM reviews r
-WHERE r.movie_id = m.id
-);
+-- SELECT
+-- m.id AS movie_id,
+-- m.title
+-- FROM movies m
+-- WHERE NOT EXISTS (
+-- SELECT 1
+-- FROM reviews r
+-- WHERE r.movie_id = m.id
+-- );
+
+--27
+-- SELECT m.title
+-- FROM movies m
+-- JOIN sessions s ON s.movie_id = m.id
+-- JOIN tickets t ON t.session_id = s.id
+-- GROUP BY m.id, m.title
+-- HAVING 
+-- COUNT(CASE WHEN t.status = 'paid' THEN 1 END) = 0
+-- AND COUNT(t.id) > 0;
+
+--28
+-- SELECT 
+-- v.id AS viewer_id,
+-- v.full_name,
+-- ROUND(AVG(r.rating), 2) AS viewer_avg_rating,
+-- ROUND((SELECT AVG(r2.rating) FROM reviews r2), 2 ) AS global_avg_rating,
+-- ROUND(AVG(r.rating) - (SELECT AVG(r3.rating) FROM reviews r3), 2) AS diff
+-- FROM viewers v
+-- JOIN reviews r ON r.viewer_id = v.id
+-- GROUP BY v.id, v.full_name;
 
 
+--29
+-- SELECT 
+-- v.id AS viewer_id,
+-- v.full_name,
+-- COUNT(DISTINCT m.genre) AS genres_count
+-- FROM viewers v
+-- JOIN tickets t ON t.viewer_id = v.id
+-- JOIN sessions s ON s.id = t.session_id
+-- JOIN movies m ON m.id = s.movie_id
+-- WHERE t.status = 'paid'
+-- GROUP BY v.id, v.full_name
+-- HAVING COUNT(DISTINCT m.genre) >= 2;
 
 
+--30
 
+-- WITH city_movie_counts AS (
+-- SELECT
+-- v.city,
+-- m.title,
+-- COUNT(t.id) AS paid_count
+-- FROM viewers v
+-- JOIN tickets t ON t.viewer_id = v.id
+-- JOIN sessions s ON s.id = t.session_id
+-- JOIN movies m ON m.id = s.movie_id
+-- WHERE t.status = 'paid'
+-- GROUP BY v.city, m.title
+-- )
+-- SELECT 
+-- c1.city,
+-- c1.title,
+-- c1.paid_count
+-- FROM city_movie_counts c1
+-- WHERE c1.paid_count = (
+-- SELECT MAX(c2.paid_count)
+-- FROM city_movie_counts c2
+-- WHERE c2.city = c1.city
+-- )
+-- ORDER BY c1.city;
 
 
 
